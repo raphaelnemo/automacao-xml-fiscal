@@ -119,3 +119,4 @@ if __name__ == "__main__":
     print("Endpoint: http://localhost:5000/DFe/<CNPJ>/<NSU>")
     print("--------------------------------------------------")
     app.run(host="127.0.0.1", port=5000, debug=False)
+    
