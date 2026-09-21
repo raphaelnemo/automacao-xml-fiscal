@@ -20,3 +20,6 @@ ambiente.txt
 .vscode/
 .idea/
 downloads/
+
+# Pacote gerado do sistema
+OSC_Fiscal_v1.0.zip
