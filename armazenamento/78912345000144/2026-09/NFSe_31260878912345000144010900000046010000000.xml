@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NFSe xmlns="http://www.abrasf.org.br/nfse.xsd">
+    <infNFSe>
+        <chNFSe>31260878912345000144010900000046010000000</chNFSe>
+        <dhEmi>2026-09-01T10:15:00-03:00</dhEmi>
+        <emit>
+            <CNPJ>78912345000144</CNPJ>
+            <xNome>Auto Posto Zona da Mata Ltda</xNome>
+        </emit>
+        <vServ>2933.31</vServ>
+    </infNFSe>
+</NFSe>

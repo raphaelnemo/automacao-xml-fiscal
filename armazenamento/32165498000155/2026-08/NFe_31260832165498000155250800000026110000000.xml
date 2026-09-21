@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+    <NFe>
+        <infNFe Id="NFe31260832165498000155250800000026110000000">
+            <ide>
+                <dhEmi>2026-08-25T14:20:00-03:00</dhEmi>
+            </ide>
+            <emit>
+                <CNPJ>32165498000155</CNPJ>
+                <xNome>Lanchonete Central Ltda</xNome>
+            </emit>
+            <total>
+                <ICMSTot>
+                    <vNF>2859.20</vNF>
+                </ICMSTot>
+            </total>
+        </infNFe>
+    </NFe>
+</nfeProc>

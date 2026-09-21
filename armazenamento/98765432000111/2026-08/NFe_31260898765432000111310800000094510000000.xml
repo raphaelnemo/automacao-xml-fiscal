@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+    <NFe>
+        <infNFe Id="NFe31260898765432000111310800000094510000000">
+            <ide>
+                <dhEmi>2026-08-31T14:20:00-03:00</dhEmi>
+            </ide>
+            <emit>
+                <CNPJ>98765432000111</CNPJ>
+                <xNome>Padaria Silva Ltda</xNome>
+            </emit>
+            <total>
+                <ICMSTot>
+                    <vNF>2147.24</vNF>
+                </ICMSTot>
+            </total>
+        </infNFe>
+    </NFe>
+</nfeProc>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe">
+    <NFe>
+        <infNFe Id="NFe31260998765432000111650010000001011000001010">
+            <ide>
+                <dhEmi>2026-09-05T15:00:00-03:00</dhEmi>
+            </ide>
+            <emit>
+                <CNPJ>98765432000111</CNPJ>
+                <xNome>Supermercado Simulado LTDA</xNome>
+            </emit>
+            <total>
+                <ICMSTot>
+                    <vNF>345.80</vNF>
+                </ICMSTot>
+            </total>
+        </infNFe>
+    </NFe>
+</nfeProc>

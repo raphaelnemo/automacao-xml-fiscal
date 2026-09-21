@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NFSe xmlns="http://www.abrasf.org.br/nfse.xsd">
+    <infNFSe>
+        <chNFSe>31260832165498000155270800000051410000000</chNFSe>
+        <dhEmi>2026-08-27T10:15:00-03:00</dhEmi>
+        <emit>
+            <CNPJ>32165498000155</CNPJ>
+            <xNome>Lanchonete Central Ltda</xNome>
+        </emit>
+        <vServ>2681.19</vServ>
+    </infNFSe>
+</NFSe>

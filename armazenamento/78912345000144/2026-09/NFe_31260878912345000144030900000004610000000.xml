@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+    <NFe>
+        <infNFe Id="NFe31260878912345000144030900000004610000000">
+            <ide>
+                <dhEmi>2026-09-03T14:20:00-03:00</dhEmi>
+            </ide>
+            <emit>
+                <CNPJ>78912345000144</CNPJ>
+                <xNome>Auto Posto Zona da Mata Ltda</xNome>
+            </emit>
+            <total>
+                <ICMSTot>
+                    <vNF>4142.31</vNF>
+                </ICMSTot>
+            </total>
+        </infNFe>
+    </NFe>
+</nfeProc>

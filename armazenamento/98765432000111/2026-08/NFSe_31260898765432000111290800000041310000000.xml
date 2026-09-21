@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NFSe xmlns="http://www.abrasf.org.br/nfse.xsd">
+    <infNFSe>
+        <chNFSe>31260898765432000111290800000041310000000</chNFSe>
+        <dhEmi>2026-08-29T10:15:00-03:00</dhEmi>
+        <emit>
+            <CNPJ>98765432000111</CNPJ>
+            <xNome>Padaria Silva Ltda</xNome>
+        </emit>
+        <vServ>537.00</vServ>
+    </infNFSe>
+</NFSe>

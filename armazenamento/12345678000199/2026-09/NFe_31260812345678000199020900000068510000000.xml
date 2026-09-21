@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+    <NFe>
+        <infNFe Id="NFe31260812345678000199020900000068510000000">
+            <ide>
+                <dhEmi>2026-09-02T14:20:00-03:00</dhEmi>
+            </ide>
+            <emit>
+                <CNPJ>12345678000199</CNPJ>
+                <xNome>Mercado Exemplo Ltda</xNome>
+            </emit>
+            <total>
+                <ICMSTot>
+                    <vNF>4236.73</vNF>
+                </ICMSTot>
+            </total>
+        </infNFe>
+    </NFe>
+</nfeProc>

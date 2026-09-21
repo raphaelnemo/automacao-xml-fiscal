@@ -1,3 +1,6 @@
 streamlit
 pandas
 bcrypt
+XlsxWriter
+reportlab
+streamlit-aggrid

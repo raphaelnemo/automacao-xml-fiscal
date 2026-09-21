@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+    <NFe>
+        <infNFe Id="NFe31260845678912000133200800000042810000000">
+            <ide>
+                <dhEmi>2026-08-20T14:20:00-03:00</dhEmi>
+            </ide>
+            <emit>
+                <CNPJ>45678912000133</CNPJ>
+                <xNome>Drogaria Muriae Ltda</xNome>
+            </emit>
+            <total>
+                <ICMSTot>
+                    <vNF>4316.40</vNF>
+                </ICMSTot>
+            </total>
+        </infNFe>
+    </NFe>
+</nfeProc>
