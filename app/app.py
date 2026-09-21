@@ -181,10 +181,32 @@ def registrar_auditoria(usuario, acao, detalhes="", status="sucesso"):
         arquivo.write(json.dumps(linha, ensure_ascii=False) + "\n")
 
 def garantir_admin_inicial():
-    if not banco.execute("SELECT id FROM usuarios WHERE username = 'admin'").fetchone():
-        data = agora_iso()
-        exec_db("INSERT INTO usuarios (username, senha_hash, perfil, ativo, senha_alterada_em, deve_trocar_senha, criado_em) VALUES (?, ?, 'admin', 1, ?, 1, ?)",
-                ("admin", gerar_hash_senha("troque-esta-senha"), data, data), commit=True)
+    # Obtém a senha do Secrets do Streamlit Cloud ou usa o padrão
+    try:
+        senha_alvo = st.secrets.get("ADMIN_PASSWORD", "Organiza2026@")
+    except Exception:
+        senha_alvo = "Organiza2026@"
+
+    data = agora_iso()
+    novo_hash = gerar_hash_senha(senha_alvo)
+
+    # Verifica se o admin já existe
+    usuario_admin = banco.execute("SELECT id FROM usuarios WHERE username = 'admin'").fetchone()
+
+    if not usuario_admin:
+        # Se não existir, cria o usuário do zero
+        exec_db(
+            "INSERT INTO usuarios (username, senha_hash, perfil, ativo, senha_alterada_em, deve_trocar_senha, criado_em) "
+            "VALUES ('admin', ?, 'admin', 1, ?, 0, ?)",
+            (novo_hash, data, data), commit=True
+        )
+    else:
+        # SE JÁ EXISTIR: Força o reset do hash da senha, zera bloqueios e limpa falhas de login
+        exec_db(
+            "UPDATE usuarios SET senha_hash = ?, ativo = 1, falhas_login = 0, bloqueado_ate = NULL, deve_trocar_senha = 0 "
+            "WHERE username = 'admin'",
+            (novo_hash,), commit=True
+        )
 
 garantir_admin_inicial()
 
