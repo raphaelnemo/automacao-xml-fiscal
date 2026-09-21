@@ -70,7 +70,7 @@
  [],
  False,
  False,
- 1789744299,
+ 1789747202,
  [('run.exe',
    'C:\\Projetos\\automacao_xml_homologacao\\.venv\\Lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit-intel\\run.exe',
    'EXECUTABLE')],

@@ -204,10 +204,15 @@ def autenticar(username, senha):
         return None, "Usuário ou senha inválidos."
     if usuario["bloqueado_ate"]:
         try:
-            if dt.datetime.fromisoformat(usuario["bloqueado_ate"]) > agora():
+            dt_bloqueio = dt.datetime.fromisoformat(usuario["bloqueado_ate"])
+            dt_bloqueio_naive = dt_bloqueio.replace(tzinfo=None)
+            agora_naive = agora().replace(tzinfo=None) if hasattr(agora(), "replace") else agora()
+
+            if dt_bloqueio_naive > agora_naive:
                 registrar_auditoria(username, "login", "Usuário temporariamente bloqueado.", "falha")
                 return None, "Usuário temporariamente bloqueado."
-        except ValueError: pass
+        except Exception as e:
+            pass
     if not verificar_senha(senha, usuario["senha_hash"]):
         falhas = usuario["falhas_login"] + 1
         bloqueado_ate = (agora() + dt.timedelta(minutes=BLOQUEIO_MINUTOS)).isoformat(timespec="seconds") if falhas >= MAX_TENTATIVAS else None
