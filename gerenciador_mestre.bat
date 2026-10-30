@@ -25,27 +25,29 @@ echo  --- ACESSO E MANUTENCAO DE USUARIOS ---
 echo  [1] Desbloquear e Reativar "admin" (Zera falhas e inatividade)
 echo  [2] Voltar "admin" para Configuracao de Primeiro Acesso (Sem senha)
 echo.
-echo  --- COMPILACAO E EMPACOTAMENTO ---
+echo  --- COMPILACAO E INSTALADOR (.EXE) ---
 echo  [3] Compilar Modo PRODUCAO (Janela oculta / Windowed)
 echo  [4] Compilar Modo DEBUG (Exibe janela do console)
-echo  [5] Limpar pastas de build temporarias (build e dist)
+echo  [5] Gerar Instalador Windows (setup_osc_fiscal.exe via Inno Setup)
+echo  [6] Limpar pastas de build temporarias (build e dist)
 echo.
 echo  --- SISTEMA E PROCESSOS ---
-echo  [6] Executar aplicacao compilada (dist\run_app\run_app.exe)
-echo  [7] Encerrar todos os processos do app (taskkill)
-echo  [8] Sair
+echo  [7] Executar aplicacao compilada (dist\run_app\run_app.exe)
+echo  [8] Encerrar todos os processos do app (taskkill)
+echo  [9] Sair
 echo.
 echo =======================================================
-set /p opcao="Escolha uma opcao [1-8]: "
+set /p opcao="Escolha uma opcao [1-9]: "
 
 if "%opcao%"=="1" goto DESBLOQUEAR
 if "%opcao%"=="2" goto RESETAR_PRIMEIRO_ACESSO
 if "%opcao%"=="3" goto BUILD_PRODUCAO
 if "%opcao%"=="4" goto BUILD_DEBUG
-if "%opcao%"=="5" goto LIMPAR
-if "%opcao%"=="6" goto EXECUTAR
-if "%opcao%"=="7" goto KILL
-if "%opcao%"=="8" goto SAIR
+if "%opcao%"=="5" goto GERAR_INSTALADOR
+if "%opcao%"=="6" goto LIMPAR
+if "%opcao%"=="7" goto EXECUTAR
+if "%opcao%"=="8" goto KILL
+if "%opcao%"=="9" goto SAIR
 
 echo.
 echo Opcao invalida!
@@ -132,6 +134,37 @@ if exist "%DB_RAIZ%" (
 
 echo.
 echo === COMPILACAO DE DEBUG CONCLUIDA COM SUCESSO! ===
+pause
+goto MENU
+
+
+:GERAR_INSTALADOR
+cls
+if not exist "%RAIZ%\dist\run_app\run_app.exe" (
+    echo [AVISO] A pasta dist\run_app ainda nao foi compilada.
+    echo Execute primeiro a opcao [3] ou [4] para compilar o executavel.
+    pause
+    goto MENU
+)
+
+set "ISCC_CMD="
+if exist "%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe" set "ISCC_CMD=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
+if exist "%ProgramFiles%\Inno Setup 6\ISCC.exe" set "ISCC_CMD=%ProgramFiles%\Inno Setup 6\ISCC.exe"
+if exist "%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" set "ISCC_CMD=%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe"
+
+if "%ISCC_CMD%"=="" (
+    echo [ERRO] Inno Setup 6 nao foi encontrado no computador.
+    echo Para instalar automaticamente pelo terminal, execute:
+    echo   winget install JRSoftware.InnoSetup
+    echo Ou baixe em: https://jrsoftware.org/isdl.php
+    pause
+    goto MENU
+)
+
+echo Compilando instalador setup_osc_fiscal.exe com Inno Setup...
+"%ISCC_CMD%" "%RAIZ%\setup.iss"
+echo.
+echo === INSTALADOR GERADO EM: %RAIZ%\installer_output\setup_osc_fiscal.exe ===
 pause
 goto MENU
 

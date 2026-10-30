@@ -3,6 +3,9 @@
 venv/
 ENV/
 
+# Arquivos Antigos / Legados (Mantidos apenas localmente)
+legado/
+
 # Arquivos do Python e Cache
 __pycache__/
 *.py[cod]
