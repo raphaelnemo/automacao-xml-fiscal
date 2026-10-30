@@ -22,8 +22,8 @@ echo  Diretorio: %RAIZ%
 echo =======================================================
 echo.
 echo  --- ACESSO E MANUTENCAO DE USUARIOS ---
-echo  [1] Desbloquear "admin" (Zera falhas e libera acesso)
-echo  [2] Resetar senha do "admin" para "admin123"
+echo  [1] Desbloquear e Reativar "admin" (Zera falhas e inatividade)
+echo  [2] Voltar "admin" para Configuracao de Primeiro Acesso (Sem senha)
 echo.
 echo  --- COMPILACAO E EMPACOTAMENTO ---
 echo  [3] Compilar Modo PRODUCAO (Janela oculta / Windowed)
@@ -39,7 +39,7 @@ echo =======================================================
 set /p opcao="Escolha uma opcao [1-8]: "
 
 if "%opcao%"=="1" goto DESBLOQUEAR
-if "%opcao%"=="2" goto RESETAR_SENHA
+if "%opcao%"=="2" goto RESETAR_PRIMEIRO_ACESSO
 if "%opcao%"=="3" goto BUILD_PRODUCAO
 if "%opcao%"=="4" goto BUILD_DEBUG
 if "%opcao%"=="5" goto LIMPAR
@@ -58,12 +58,12 @@ cls
 echo [1/2] Encerrando executaveis em segundo plano para liberar o banco...
 taskkill /F /IM run_app.exe /T >nul 2>&1
 
-echo [2/2] Aplicando desbloqueio nos bancos SQLite...
+echo [2/2] Aplicando desbloqueio e reativacao nos bancos SQLite...
 if exist "%DB_RAIZ%" (
-    "%PYTHON_VENV%" -c "import sqlite3; conn = sqlite3.connect(r'%DB_RAIZ%'); conn.execute('UPDATE usuarios SET ativo = 1, falhas_login = 0, bloqueado_ate = ? WHERE username = ?', ('1970-01-01 00:00:00', 'admin')); conn.commit(); conn.close(); print('-> Banco Raiz: Admin liberado!')"
+    "%PYTHON_VENV%" -c "import sqlite3, datetime; ts = datetime.datetime.now().astimezone().isoformat(timespec='seconds'); conn = sqlite3.connect(r'%DB_RAIZ%'); conn.execute('UPDATE usuarios SET ativo = 1, falhas_login = 0, bloqueado_ate = NULL, ultimo_acesso = ? WHERE username = ?', (ts, 'admin')); conn.commit(); conn.close(); print('-> Banco Raiz: Admin reativado e desbloqueado!')"
 )
 if exist "%DB_DIST%" (
-    "%PYTHON_VENV%" -c "import sqlite3; conn = sqlite3.connect(r'%DB_DIST%'); conn.execute('UPDATE usuarios SET ativo = 1, falhas_login = 0, bloqueado_ate = ? WHERE username = ?', ('1970-01-01 00:00:00', 'admin')); conn.commit(); conn.close(); print('-> Banco Dist: Admin liberado!')"
+    "%PYTHON_VENV%" -c "import sqlite3, datetime; ts = datetime.datetime.now().astimezone().isoformat(timespec='seconds'); conn = sqlite3.connect(r'%DB_DIST%'); conn.execute('UPDATE usuarios SET ativo = 1, falhas_login = 0, bloqueado_ate = NULL, ultimo_acesso = ? WHERE username = ?', (ts, 'admin')); conn.commit(); conn.close(); print('-> Banco Dist: Admin reativado e desbloqueado!')"
 )
 echo.
 echo Processo concluido com sucesso.
@@ -71,17 +71,17 @@ pause
 goto MENU
 
 
-:RESETAR_SENHA
+:RESETAR_PRIMEIRO_ACESSO
 cls
 echo [1/2] Encerrando processos antigos...
 taskkill /F /IM run_app.exe /T >nul 2>&1
 
-echo [2/2] Redefinindo senha do usuario admin para 'admin123'...
+echo [2/2] Redefinindo para exigir configuracao de senha no proximo acesso...
 if exist "%DB_RAIZ%" (
-    "%PYTHON_VENV%" -c "import sqlite3, bcrypt; hash_pw = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'); conn = sqlite3.connect(r'%DB_RAIZ%'); conn.execute('UPDATE usuarios SET senha_hash = ?, ativo = 1, falhas_login = 0 WHERE username = ?', (hash_pw, 'admin')); conn.commit(); conn.close(); print('-> Banco Raiz: Senha alterada para admin123!')"
+    "%PYTHON_VENV%" -c "import sqlite3; conn = sqlite3.connect(r'%DB_RAIZ%'); conn.execute('UPDATE usuarios SET senha_hash = ?, ativo = 1, falhas_login = 0, bloqueado_ate = NULL WHERE perfil = ?', ('', 'admin')); conn.commit(); conn.close(); print('-> Banco Raiz: Pronto para configurar nova senha no primeiro login!')"
 )
 if exist "%DB_DIST%" (
-    "%PYTHON_VENV%" -c "import sqlite3, bcrypt; hash_pw = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'); conn = sqlite3.connect(r'%DB_DIST%'); conn.execute('UPDATE usuarios SET senha_hash = ?, ativo = 1, falhas_login = 0 WHERE username = ?', (hash_pw, 'admin')); conn.commit(); conn.close(); print('-> Banco Dist: Senha alterada para admin123!')"
+    "%PYTHON_VENV%" -c "import sqlite3; conn = sqlite3.connect(r'%DB_DIST%'); conn.execute('UPDATE usuarios SET senha_hash = ?, ativo = 1, falhas_login = 0, bloqueado_ate = NULL WHERE perfil = ?', ('', 'admin')); conn.commit(); conn.close(); print('-> Banco Dist: Pronto para configurar nova senha no primeiro login!')"
 )
 echo.
 pause
@@ -94,12 +94,13 @@ echo [1/3] Encerrando aplicacao em execucao...
 taskkill /F /IM run_app.exe /T >nul 2>&1
 
 echo [2/3] Compilando com PyInstaller (Modo Producao - Sem Janela)...
-"%PYINSTALLER_VENV%" --noconfirm --onedir --windowed --add-data "app;app" --copy-metadata streamlit --collect-all streamlit --collect-all reportlab --collect-all bcrypt run_app.py
+"%PYINSTALLER_VENV%" --noconfirm --clean --onedir --windowed --add-data "app;app" --add-data ".streamlit;.streamlit" --copy-metadata streamlit --copy-metadata reportlab --copy-metadata bcrypt --copy-metadata altair --copy-metadata pandas --copy-metadata pyarrow --collect-all streamlit --collect-all reportlab --collect-all bcrypt --hidden-import sqlite3 --hidden-import requests run_app.py
 
 echo [3/3] Garantindo estrutura e sincronizando banco de dados...
 if not exist "%RAIZ%\dist\run_app\segredos" mkdir "%RAIZ%\dist\run_app\segredos"
 if not exist "%RAIZ%\dist\run_app\armazenamento" mkdir "%RAIZ%\dist\run_app\armazenamento"
 if not exist "%RAIZ%\dist\run_app\logs" mkdir "%RAIZ%\dist\run_app\logs"
+copy /Y "%RAIZ%\gerenciador_mestre.bat" "%RAIZ%\dist\run_app\gerenciador_mestre.bat" >nul
 
 if exist "%DB_RAIZ%" (
     copy /Y "%DB_RAIZ%" "%DB_DIST%" >nul
@@ -117,12 +118,13 @@ echo [1/3] Encerrando aplicacao em execucao...
 taskkill /F /IM run_app.exe /T >nul 2>&1
 
 echo [2/3] Compilando com PyInstaller (Modo Debug - Com Console)...
-"%PYINSTALLER_VENV%" --noconfirm --onedir --console --add-data "app;app" --copy-metadata streamlit --collect-all streamlit --collect-all reportlab --collect-all bcrypt run_app.py
+"%PYINSTALLER_VENV%" --noconfirm --clean --onedir --console --add-data "app;app" --add-data ".streamlit;.streamlit" --copy-metadata streamlit --copy-metadata reportlab --copy-metadata bcrypt --copy-metadata altair --copy-metadata pandas --copy-metadata pyarrow --collect-all streamlit --collect-all reportlab --collect-all bcrypt --hidden-import sqlite3 --hidden-import requests run_app.py
 
 echo [3/3] Garantindo estrutura e sincronizando banco de dados...
 if not exist "%RAIZ%\dist\run_app\segredos" mkdir "%RAIZ%\dist\run_app\segredos"
 if not exist "%RAIZ%\dist\run_app\armazenamento" mkdir "%RAIZ%\dist\run_app\armazenamento"
 if not exist "%RAIZ%\dist\run_app\logs" mkdir "%RAIZ%\dist\run_app\logs"
+copy /Y "%RAIZ%\gerenciador_mestre.bat" "%RAIZ%\dist\run_app\gerenciador_mestre.bat" >nul
 
 if exist "%DB_RAIZ%" (
     copy /Y "%DB_RAIZ%" "%DB_DIST%" >nul
@@ -154,7 +156,7 @@ if not exist "%RAIZ%\dist\run_app\run_app.exe" (
     pause
     goto MENU
 )
-echo Iniciando aplicação em dist\run_app\run_app.exe...
+echo Iniciando aplicacao em dist\run_app\run_app.exe...
 start "" "%RAIZ%\dist\run_app\run_app.exe"
 goto MENU
 

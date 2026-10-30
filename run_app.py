@@ -1,16 +1,20 @@
 import os
 import sys
+from pathlib import Path
 import streamlit.web.cli as stcli
 
 if __name__ == "__main__":
-    # Trata o diretório temporário criado pelo PyInstaller no modo congelado
-    if getattr(sys, 'frozen', False):
-        base_dir = sys._MEIPASS
+    # Quando empacotado com PyInstaller (--onedir), sys._MEIPASS aponta para _internal (onde está app/app.py),
+    # enquanto sys.executable aponta para a pasta principal do aplicativo (onde ficam segredos/, logs/, armazenamento/).
+    if getattr(sys, "frozen", False):
+        exe_dir = Path(sys.executable).resolve().parent
+        internal_dir = Path(getattr(sys, "_MEIPASS", exe_dir))
     else:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
+        exe_dir = Path(__file__).resolve().parent
+        internal_dir = exe_dir
 
-    os.chdir(base_dir)
-    script_path = os.path.join(base_dir, "app", "app.py")
+    os.chdir(exe_dir)
+    script_path = str(internal_dir / "app" / "app.py")
 
     sys.argv = [
         "streamlit",
@@ -18,7 +22,7 @@ if __name__ == "__main__":
         script_path,
         "--global.developmentMode=false",
         "--server.headless=true",
-        "--browser.gatherUsageStats=false"
+        "--browser.gatherUsageStats=false",
     ]
 
     sys.exit(stcli.main())

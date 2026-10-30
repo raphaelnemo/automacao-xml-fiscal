@@ -8,18 +8,27 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Arquivos Sensíveis e Banco de Dados Local
+# Build / Compilação PyInstaller e Inno Setup
+build/
+dist/
+installer_output/
+*.exe
+
+# Arquivos Sensíveis, Logs e Banco de Dados Local
 segredos/
 logs/
 armazenamento/
 *.db
 *.sqlite3
+*.log
 ambiente.txt
+iniciar_servidor.bat
 
 # Arquivos e Configurações do VS Code / IDEs
 .vscode/
 .idea/
 downloads/
 
-# Pacote gerado do sistema
+# Pacotes gerados do sistema
 OSC_Fiscal_v1.0.zip
+*.zip

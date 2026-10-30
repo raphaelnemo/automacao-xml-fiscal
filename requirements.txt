@@ -1,6 +1,7 @@
 streamlit
 pandas
 bcrypt
-XlsxWriter
+requests
+flask
 reportlab
-streamlit-aggrid
+XlsxWriter
