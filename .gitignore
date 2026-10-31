@@ -25,6 +25,7 @@ armazenamento/
 *.sqlite3
 *.log
 ambiente.txt
+porta.txt
 iniciar_servidor.bat
 
 # Arquivos e Configurações do VS Code / IDEs

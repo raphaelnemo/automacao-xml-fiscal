@@ -16,11 +16,24 @@ if __name__ == "__main__":
     os.chdir(exe_dir)
     script_path = str(internal_dir / "app" / "app.py")
 
+    # Lê a porta configurada em porta.txt (se existir), caso contrário usa 8501
+    porta = "8501"
+    porta_file = exe_dir / "porta.txt"
+    if porta_file.exists():
+        try:
+            valor = porta_file.read_text(encoding="utf-8").strip()
+            if valor.isdigit() and 1024 <= int(valor) <= 65535:
+                porta = valor
+        except Exception:
+            pass
+
     sys.argv = [
         "streamlit",
         "run",
         script_path,
         "--global.developmentMode=false",
+        "--server.port",
+        porta,
         "--server.headless=true",
         "--browser.gatherUsageStats=false",
     ]
