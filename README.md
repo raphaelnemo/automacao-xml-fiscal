@@ -94,6 +94,10 @@ python agendador.py
 
 ```
 
+### Instalação empacotada no Windows
+
+Ao gerar o instalador pelo Gerenciador Mestre, o pacote inclui `run_app.exe` e `agendador.exe`; o computador de destino não precisa ter Python instalado. O atalho abre o painel no navegador após o servidor responder. O atalho **Gerenciador Mestre** oferece as ações de iniciar o painel, iniciar o agendador e encerrar ambos.
+
 
 
 ---

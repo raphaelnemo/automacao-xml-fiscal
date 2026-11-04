@@ -1,24 +1,26 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_all, copy_metadata
+from PyInstaller.utils.hooks import collect_all
+from PyInstaller.utils.hooks import copy_metadata
 
-datas = [("app", "app"), (".streamlit", ".streamlit")]
+datas = [('app', 'app'), ('.streamlit', '.streamlit')]
 binaries = []
-hiddenimports = ["sqlite3", "requests", "pandas", "bcrypt", "reportlab"]
+hiddenimports = ['sqlite3', 'requests', 'pandas']
+datas += copy_metadata('streamlit')
+datas += copy_metadata('reportlab')
+datas += copy_metadata('bcrypt')
+datas += copy_metadata('altair')
+datas += copy_metadata('pandas')
+datas += copy_metadata('pyarrow')
+tmp_ret = collect_all('streamlit')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('reportlab')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('bcrypt')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
-for pkg in ("streamlit", "reportlab", "bcrypt", "altair", "pandas", "pyarrow"):
-    try:
-        datas += copy_metadata(pkg)
-    except Exception:
-        pass
-
-for pkg in ("streamlit", "reportlab", "bcrypt"):
-    tmp_ret = collect_all(pkg)
-    datas += tmp_ret[0]
-    binaries += tmp_ret[1]
-    hiddenimports += tmp_ret[2]
 
 a = Analysis(
-    ["run_app.py"],
+    ['run_app.py'],
     pathex=[],
     binaries=binaries,
     datas=datas,
@@ -37,7 +39,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="run_app",
+    name='run_app',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -56,5 +58,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name="run_app",
+    name='run_app',
 )

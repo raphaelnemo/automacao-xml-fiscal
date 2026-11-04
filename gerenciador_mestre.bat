@@ -20,6 +20,53 @@ set "DB_RAIZ=%RAIZ%\segredos\osc_sistema.db"
 set "DB_DIST=%RAIZ%\dist\run_app\segredos\osc_sistema.db"
 set "PORTA_FILE=%RAIZ%\porta.txt"
 
+if not exist "%RAIZ%\app\app.py" if exist "%RAIZ%\run_app.exe" goto MENU_INSTALADO
+
+:MENU_INSTALADO
+if exist "%RAIZ%\app\app.py" goto MENU
+if not exist "%RAIZ%\run_app.exe" goto MENU
+cls
+set "PORTA_ATUAL=8501"
+if exist "%PORTA_FILE%" set /p PORTA_ATUAL=<"%PORTA_FILE%"
+echo ============================================================
+echo                 OSC ERP FISCAL - INSTALADO
+echo ============================================================
+echo  Porta do ERP: %PORTA_ATUAL%
+echo.
+echo  [1] Abrir painel do ERP
+echo  [2] Iniciar motor agendador
+echo  [3] Encerrar ERP e agendador
+echo  [0] Sair
+echo.
+set "opcao="
+set /p opcao="Escolha uma opcao [0-3]: "
+if "%opcao%"=="1" (
+    start "" "%RAIZ%\run_app.exe"
+    goto MENU_INSTALADO
+)
+if "%opcao%"=="2" (
+    if not exist "%RAIZ%\agendador.exe" (
+        echo [ERRO] O agendador nao foi incluido nesta instalacao. Recompile e gere um novo instalador.
+        pause
+        goto MENU_INSTALADO
+    )
+    start "Agendador Fiscal - OSC" "%RAIZ%\agendador.exe"
+    echo Agendador iniciado em uma nova janela.
+    pause
+    goto MENU_INSTALADO
+)
+if "%opcao%"=="3" (
+    taskkill /F /IM run_app.exe /T >nul 2>&1
+    taskkill /F /IM agendador.exe /T >nul 2>&1
+    echo Processos encerrados.
+    pause
+    goto MENU_INSTALADO
+)
+if "%opcao%"=="0" exit /b 0
+echo Opcao invalida.
+timeout /t 2 >nul
+goto MENU_INSTALADO
+
 :MENU
 cls
 :: Leitura dinamica de Porta e Ambiente para exibir no cabecalho
@@ -220,24 +267,57 @@ goto MENU
 
 :BUILD_PRODUCAO
 cls
+call :ESCOLHER_PASTA_SAIDA
+if errorlevel 1 goto MENU
+set "BUILD_APP_DIR=%BUILD_OUTPUT_DIR%\run_app"
+
 echo [1/3] Encerrando aplicacao em execucao...
 taskkill /F /IM run_app.exe /T >nul 2>&1
 
+set "BUILD_WORKPATH=%TEMP%\osc_pyinstaller_producao_%RANDOM%_%RANDOM%"
 echo [2/3] Compilando com PyInstaller (Modo Producao - Sem Janela)...
-%PYINSTALLER_CMD% --noconfirm --clean --onedir --windowed --add-data "app;app" --add-data ".streamlit;.streamlit" --copy-metadata streamlit --copy-metadata reportlab --copy-metadata bcrypt --copy-metadata altair --copy-metadata pandas --copy-metadata pyarrow --collect-all streamlit --collect-all reportlab --collect-all bcrypt --hidden-import sqlite3 --hidden-import requests run_app.py
+%PYINSTALLER_CMD% --noconfirm --clean --onedir --workpath "%BUILD_WORKPATH%" --distpath "%BUILD_OUTPUT_DIR%" --windowed --add-data "app;app" --add-data ".streamlit;.streamlit" --copy-metadata streamlit --copy-metadata reportlab --copy-metadata bcrypt --copy-metadata altair --copy-metadata pandas --copy-metadata pyarrow --collect-all streamlit --collect-all reportlab --collect-all bcrypt --hidden-import sqlite3 --hidden-import requests --hidden-import pandas run_app.py
+set "BUILD_EXIT_CODE=%ERRORLEVEL%"
+if not "%BUILD_EXIT_CODE%"=="0" (
+    echo.
+    echo [ERRO] PyInstaller falhou no modo Producao. Codigo de saida: %BUILD_EXIT_CODE%
+    echo A sincronizacao pos-compilacao foi interrompida.
+    echo Arquivos temporarios: %BUILD_WORKPATH%
+    pause
+    goto MENU
+)
+if not exist "%BUILD_APP_DIR%\run_app.exe" (
+    echo.
+    echo [ERRO] PyInstaller terminou sem gerar "%BUILD_APP_DIR%\run_app.exe".
+    echo A sincronizacao foi interrompida.
+    pause
+    goto MENU
+)
 
 echo [3/3] Garantindo estrutura e sincronizando arquivos...
-if not exist "%RAIZ%\dist\run_app\segredos" mkdir "%RAIZ%\dist\run_app\segredos"
-if not exist "%RAIZ%\dist\run_app\armazenamento" mkdir "%RAIZ%\dist\run_app\armazenamento"
-if not exist "%RAIZ%\dist\run_app\logs" mkdir "%RAIZ%\dist\run_app\logs"
-if not exist "%RAIZ%\dist\run_app\.streamlit" mkdir "%RAIZ%\dist\run_app\.streamlit"
-if exist "%RAIZ%\.streamlit\config.toml" copy /Y "%RAIZ%\.streamlit\config.toml" "%RAIZ%\dist\run_app\.streamlit\config.toml" >nul
-if exist "%RAIZ%\ambiente.txt" copy /Y "%RAIZ%\ambiente.txt" "%RAIZ%\dist\run_app\ambiente.txt" >nul
-copy /Y "%RAIZ%\gerenciador_mestre.bat" "%RAIZ%\dist\run_app\gerenciador_mestre.bat" >nul
-if exist "%PORTA_FILE%" copy /Y "%PORTA_FILE%" "%RAIZ%\dist\run_app\porta.txt" >nul
-if exist "%DB_RAIZ%" copy /Y "%DB_RAIZ%" "%DB_DIST%" >nul
+if not exist "%BUILD_APP_DIR%\segredos" mkdir "%BUILD_APP_DIR%\segredos"
+if not exist "%BUILD_APP_DIR%\armazenamento" mkdir "%BUILD_APP_DIR%\armazenamento"
+if not exist "%BUILD_APP_DIR%\logs" mkdir "%BUILD_APP_DIR%\logs"
+if not exist "%BUILD_APP_DIR%\.streamlit" mkdir "%BUILD_APP_DIR%\.streamlit"
+if exist "%RAIZ%\.streamlit\config.toml" copy /Y "%RAIZ%\.streamlit\config.toml" "%BUILD_APP_DIR%\.streamlit\config.toml" >nul
+if exist "%RAIZ%\ambiente.txt" copy /Y "%RAIZ%\ambiente.txt" "%BUILD_APP_DIR%\ambiente.txt" >nul
+copy /Y "%RAIZ%\gerenciador_mestre.bat" "%BUILD_APP_DIR%\gerenciador_mestre.bat" >nul
+if exist "%PORTA_FILE%" copy /Y "%PORTA_FILE%" "%BUILD_APP_DIR%\porta.txt" >nul
+if exist "%DB_RAIZ%" copy /Y "%DB_RAIZ%" "%BUILD_APP_DIR%\segredos\osc_sistema.db" >nul
+call :COMPILAR_AGENDADOR
+if errorlevel 1 goto MENU
+if /I not "%BUILD_APP_DIR%"=="%RAIZ%\dist\run_app" (
+    xcopy /E /H /I /Y /Q "%BUILD_APP_DIR%\*" "%RAIZ%\dist\run_app\" >nul
+    if errorlevel 1 (
+        echo.
+        echo [ERRO] Nao foi possivel sincronizar a compilacao para dist\run_app.
+        pause
+        goto MENU
+    )
+)
 
 echo.
+echo Executavel salvo em: "%BUILD_APP_DIR%"
 echo === COMPILACAO DE PRODUCAO CONCLUIDA COM SUCESSO! ===
 pause
 goto MENU
@@ -245,27 +325,84 @@ goto MENU
 
 :BUILD_DEBUG
 cls
+call :ESCOLHER_PASTA_SAIDA
+if errorlevel 1 goto MENU
+set "BUILD_APP_DIR=%BUILD_OUTPUT_DIR%\run_app"
+
 echo [1/3] Encerrando aplicacao em execucao...
 taskkill /F /IM run_app.exe /T >nul 2>&1
 
+set "BUILD_WORKPATH=%TEMP%\osc_pyinstaller_debug_%RANDOM%_%RANDOM%"
 echo [2/3] Compilando com PyInstaller (Modo Debug - Com Console)...
-%PYINSTALLER_CMD% --noconfirm --clean --onedir --console --add-data "app;app" --add-data ".streamlit;.streamlit" --copy-metadata streamlit --copy-metadata reportlab --copy-metadata bcrypt --copy-metadata altair --copy-metadata pandas --copy-metadata pyarrow --collect-all streamlit --collect-all reportlab --collect-all bcrypt --hidden-import sqlite3 --hidden-import requests run_app.py
+%PYINSTALLER_CMD% --noconfirm --clean --onedir --workpath "%BUILD_WORKPATH%" --distpath "%BUILD_OUTPUT_DIR%" --console --add-data "app;app" --add-data ".streamlit;.streamlit" --copy-metadata streamlit --copy-metadata reportlab --copy-metadata bcrypt --copy-metadata altair --copy-metadata pandas --copy-metadata pyarrow --collect-all streamlit --collect-all reportlab --collect-all bcrypt --hidden-import sqlite3 --hidden-import requests --hidden-import pandas run_app.py
+set "BUILD_EXIT_CODE=%ERRORLEVEL%"
+if not "%BUILD_EXIT_CODE%"=="0" (
+    echo.
+    echo [ERRO] PyInstaller falhou no modo Debug. Codigo de saida: %BUILD_EXIT_CODE%
+    echo A sincronizacao pos-compilacao foi interrompida.
+    echo Arquivos temporarios: %BUILD_WORKPATH%
+    pause
+    goto MENU
+)
+if not exist "%BUILD_APP_DIR%\run_app.exe" (
+    echo.
+    echo [ERRO] PyInstaller terminou sem gerar "%BUILD_APP_DIR%\run_app.exe".
+    echo A sincronizacao foi interrompida.
+    pause
+    goto MENU
+)
 
 echo [3/3] Garantindo estrutura e sincronizando arquivos...
-if not exist "%RAIZ%\dist\run_app\segredos" mkdir "%RAIZ%\dist\run_app\segredos"
-if not exist "%RAIZ%\dist\run_app\armazenamento" mkdir "%RAIZ%\dist\run_app\armazenamento"
-if not exist "%RAIZ%\dist\run_app\logs" mkdir "%RAIZ%\dist\run_app\logs"
-if not exist "%RAIZ%\dist\run_app\.streamlit" mkdir "%RAIZ%\dist\run_app\.streamlit"
-if exist "%RAIZ%\.streamlit\config.toml" copy /Y "%RAIZ%\.streamlit\config.toml" "%RAIZ%\dist\run_app\.streamlit\config.toml" >nul
-if exist "%RAIZ%\ambiente.txt" copy /Y "%RAIZ%\ambiente.txt" "%RAIZ%\dist\run_app\ambiente.txt" >nul
-copy /Y "%RAIZ%\gerenciador_mestre.bat" "%RAIZ%\dist\run_app\gerenciador_mestre.bat" >nul
-if exist "%PORTA_FILE%" copy /Y "%PORTA_FILE%" "%RAIZ%\dist\run_app\porta.txt" >nul
-if exist "%DB_RAIZ%" copy /Y "%DB_RAIZ%" "%DB_DIST%" >nul
+if not exist "%BUILD_APP_DIR%\segredos" mkdir "%BUILD_APP_DIR%\segredos"
+if not exist "%BUILD_APP_DIR%\armazenamento" mkdir "%BUILD_APP_DIR%\armazenamento"
+if not exist "%BUILD_APP_DIR%\logs" mkdir "%BUILD_APP_DIR%\logs"
+if not exist "%BUILD_APP_DIR%\.streamlit" mkdir "%BUILD_APP_DIR%\.streamlit"
+if exist "%RAIZ%\.streamlit\config.toml" copy /Y "%RAIZ%\.streamlit\config.toml" "%BUILD_APP_DIR%\.streamlit\config.toml" >nul
+if exist "%RAIZ%\ambiente.txt" copy /Y "%RAIZ%\ambiente.txt" "%BUILD_APP_DIR%\ambiente.txt" >nul
+copy /Y "%RAIZ%\gerenciador_mestre.bat" "%BUILD_APP_DIR%\gerenciador_mestre.bat" >nul
+if exist "%PORTA_FILE%" copy /Y "%PORTA_FILE%" "%BUILD_APP_DIR%\porta.txt" >nul
+if exist "%DB_RAIZ%" copy /Y "%DB_RAIZ%" "%BUILD_APP_DIR%\segredos\osc_sistema.db" >nul
+call :COMPILAR_AGENDADOR
+if errorlevel 1 goto MENU
+if /I not "%BUILD_APP_DIR%"=="%RAIZ%\dist\run_app" (
+    xcopy /E /H /I /Y /Q "%BUILD_APP_DIR%\*" "%RAIZ%\dist\run_app\" >nul
+    if errorlevel 1 (
+        echo.
+        echo [ERRO] Nao foi possivel sincronizar a compilacao para dist\run_app.
+        pause
+        goto MENU
+    )
+)
 
 echo.
+echo Executavel salvo em: "%BUILD_APP_DIR%"
 echo === COMPILACAO DE DEBUG CONCLUIDA COM SUCESSO! ===
 pause
 goto MENU
+
+
+:COMPILAR_AGENDADOR
+if not exist "%RAIZ%\agendador.py" (
+    echo.
+    echo [ERRO] O arquivo agendador.py nao foi encontrado em "%RAIZ%".
+    pause
+    exit /b 1
+)
+echo Compilando agendador.exe para incluir no instalador...
+%PYINSTALLER_CMD% --noconfirm --clean --onefile --console --workpath "%BUILD_WORKPATH%\agendador" --distpath "%BUILD_APP_DIR%" --name agendador --hidden-import sqlite3 --hidden-import requests "%RAIZ%\agendador.py"
+if errorlevel 1 (
+    echo.
+    echo [ERRO] Nao foi possivel compilar agendador.exe.
+    pause
+    exit /b 1
+)
+if not exist "%BUILD_APP_DIR%\agendador.exe" (
+    echo.
+    echo [ERRO] O PyInstaller terminou sem gerar agendador.exe.
+    pause
+    exit /b 1
+)
+exit /b 0
 
 
 :GERAR_INSTALADOR
@@ -276,6 +413,37 @@ if not exist "%RAIZ%\dist\run_app\run_app.exe" (
     pause
     goto MENU
 )
+if not exist "%RAIZ%\dist\run_app\agendador.exe" (
+    echo [AVISO] O agendador empacotado nao foi encontrado em dist\run_app.
+    echo Execute a opcao [8] ou [9] novamente para compilar ambos os executaveis.
+    pause
+    goto MENU
+)
+
+set "SIGN_CERT_THUMBPRINT="
+for /f "usebackq delims=" %%C in (`powershell.exe -NoProfile -Command "$now = Get-Date; $best = $null; foreach ($cert in Get-ChildItem Cert:\CurrentUser\My) { if ($cert.Subject -eq 'CN=MeuCertificadoDev' -and $cert.HasPrivateKey -and $cert.NotBefore -le $now -and $cert.NotAfter -gt $now -and $cert.Thumbprint -match '^[0-9A-Fa-f]{40}$' -and ($null -eq $best -or $cert.NotAfter -gt $best.NotAfter)) { $best = $cert } }; if ($best) { $best.Thumbprint }"`) do set "SIGN_CERT_THUMBPRINT=%%C"
+if "%SIGN_CERT_THUMBPRINT%"=="" (
+    echo [ERRO] Nao foi encontrado certificado CN=MeuCertificadoDev valido, com chave privada e thumbprint correto, em CurrentUser\My.
+    echo Verifique a validade e a instalacao do certificado no repositorio Pessoal deste usuario.
+    pause
+    goto MENU
+)
+set "SIGN_CERT_THUMBPRINT=%SIGN_CERT_THUMBPRINT: =%"
+echo Certificado selecionado - SHA1: %SIGN_CERT_THUMBPRINT%
+
+set "SIGNTOOL_CMD="
+for /f "delims=" %%S in ('where signtool.exe 2^>nul') do if not defined SIGNTOOL_CMD set "SIGNTOOL_CMD=%%~fS"
+if "%SIGNTOOL_CMD%"=="" (
+    for /d %%V in ("%ProgramFiles(x86)%\Windows Kits\10\bin\*") do if exist "%%~fV\x64\signtool.exe" set "SIGNTOOL_CMD=%%~fV\x64\signtool.exe"
+)
+if not exist "%SIGNTOOL_CMD%" (
+    echo [ERRO] SignTool nao encontrado. Instale o Windows SDK com a ferramenta SignTool.
+    echo No Visual Studio Installer, selecione Windows 10/11 SDK.
+    echo Caminho localizado: "%SIGNTOOL_CMD%"
+    pause
+    goto MENU
+)
+echo SignTool localizado: "%SIGNTOOL_CMD%"
 
 set "ISCC_CMD="
 where iscc.exe >nul 2>&1 && set "ISCC_CMD=iscc.exe"
@@ -293,10 +461,63 @@ if "%ISCC_CMD%"=="" (
     goto MENU
 )
 
+echo Assinando executavel principal com o certificado CN=MeuCertificadoDev...
+"%SIGNTOOL_CMD%" sign /sha1 "%SIGN_CERT_THUMBPRINT%" /s My /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /d "OSC ERP Fiscal" "%RAIZ%\dist\run_app\run_app.exe"
+if errorlevel 1 (
+    echo [ERRO] Nao foi possivel assinar dist\run_app\run_app.exe.
+    pause
+    goto MENU
+)
+"%SIGNTOOL_CMD%" verify /pa /v "%RAIZ%\dist\run_app\run_app.exe"
+if errorlevel 1 (
+    echo [ERRO] A assinatura do executavel nao foi validada. Instalador nao sera gerado.
+    pause
+    goto MENU
+)
+
+echo Assinando agendador.exe com o certificado CN=MeuCertificadoDev...
+"%SIGNTOOL_CMD%" sign /sha1 "%SIGN_CERT_THUMBPRINT%" /s My /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /d "OSC ERP Fiscal - Agendador" "%RAIZ%\dist\run_app\agendador.exe"
+if errorlevel 1 (
+    echo [ERRO] Nao foi possivel assinar dist\run_app\agendador.exe.
+    pause
+    goto MENU
+)
+"%SIGNTOOL_CMD%" verify /pa /v "%RAIZ%\dist\run_app\agendador.exe"
+if errorlevel 1 (
+    echo [ERRO] A assinatura de agendador.exe nao foi validada. Instalador nao sera gerado.
+    pause
+    goto MENU
+)
+
 echo Compilando instalador setup_osc_fiscal.exe com Inno Setup...
 "%ISCC_CMD%" "%RAIZ%\setup.iss"
+if errorlevel 1 (
+    echo [ERRO] O Inno Setup falhou ao gerar o instalador.
+    pause
+    goto MENU
+)
+if not exist "%RAIZ%\installer_output\setup_osc_fiscal.exe" (
+    echo [ERRO] O instalador nao foi encontrado em installer_output.
+    pause
+    goto MENU
+)
+
+echo Assinando instalador com o certificado CN=MeuCertificadoDev...
+"%SIGNTOOL_CMD%" sign /sha1 "%SIGN_CERT_THUMBPRINT%" /s My /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /d "OSC ERP Fiscal" "%RAIZ%\installer_output\setup_osc_fiscal.exe"
+if errorlevel 1 (
+    echo [ERRO] Nao foi possivel assinar o instalador.
+    pause
+    goto MENU
+)
+"%SIGNTOOL_CMD%" verify /pa /v "%RAIZ%\installer_output\setup_osc_fiscal.exe"
+if errorlevel 1 (
+    echo [ERRO] A assinatura do instalador nao foi validada.
+    pause
+    goto MENU
+)
+
 echo.
-echo === INSTALADOR GERADO EM: %RAIZ%\installer_output\setup_osc_fiscal.exe ===
+echo === INSTALADOR ASSINADO E VALIDADO: %RAIZ%\installer_output\setup_osc_fiscal.exe ===
 pause
 goto MENU
 
@@ -338,6 +559,30 @@ taskkill /F /IM run_app.exe /T >nul 2>&1
 echo Processos encerrados.
 pause
 goto MENU
+
+
+:ESCOLHER_PASTA_SAIDA
+set "BUILD_OUTPUT_DIR="
+set "PICKER_FILE=%TEMP%\osc_saida_%RANDOM%_%RANDOM%.txt"
+powershell.exe -NoProfile -STA -Command "Add-Type -AssemblyName System.Windows.Forms; $dialog = New-Object System.Windows.Forms.FolderBrowserDialog; $dialog.Description = 'Selecione a pasta para salvar a compilacao'; $dialog.ShowNewFolderButton = $true; if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [System.IO.File]::WriteAllText($env:PICKER_FILE, $dialog.SelectedPath) }"
+if errorlevel 1 (
+    del /Q "%PICKER_FILE%" >nul 2>&1
+    echo [ERRO] Nao foi possivel abrir o seletor de pastas do Windows.
+    pause
+    exit /b 1
+)
+if not exist "%PICKER_FILE%" (
+    echo Selecao cancelada. Nenhuma compilacao foi iniciada.
+    exit /b 1
+)
+set /p "BUILD_OUTPUT_DIR="<"%PICKER_FILE%"
+del /Q "%PICKER_FILE%" >nul 2>&1
+if "%BUILD_OUTPUT_DIR%"=="" (
+    echo [ERRO] A pasta de saida selecionada esta vazia.
+    pause
+    exit /b 1
+)
+exit /b 0
 
 
 :SAIR
