@@ -38,12 +38,12 @@ Name: "{app}\logs"; Permissions: users-full
 
 [Icons]
 ; Atalho no Menu Iniciar
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{group}\Gerenciador Mestre"; Filename: "{app}\gerenciador_mestre.bat"; IconFilename: "{sys}\cmd.exe"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
+Name: "{group}\Gerenciador Mestre"; Filename: "{app}\gerenciador_mestre.bat"; IconFilename: "{sys}\cmd.exe"; WorkingDir: "{app}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 
 ; Atalho opcional na Area de Trabalho
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; WorkingDir: "{app}"
 
 [Run]
 ; Inicia o ERP automaticamente apos finalizar a instalacao

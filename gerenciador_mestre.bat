@@ -10,10 +10,10 @@ cd /d "%RAIZ%"
 :: Detecta Python (usa .venv se existir, senao usa python global do sistema)
 if exist "%RAIZ%\.venv\Scripts\python.exe" (
     set "PYTHON_CMD=%RAIZ%\.venv\Scripts\python.exe"
-    set "PYINSTALLER_CMD=%RAIZ%\.venv\Scripts\pyinstaller.exe"
+    set "PYINSTALLER_CMD=%RAIZ%\.venv\Scripts\python.exe -m PyInstaller"
 ) else (
     set "PYTHON_CMD=python"
-    set "PYINSTALLER_CMD=pyinstaller"
+    set "PYINSTALLER_CMD=python -m PyInstaller"
 )
 
 set "DB_RAIZ=%RAIZ%\segredos\osc_sistema.db"
@@ -224,12 +224,15 @@ echo [1/3] Encerrando aplicacao em execucao...
 taskkill /F /IM run_app.exe /T >nul 2>&1
 
 echo [2/3] Compilando com PyInstaller (Modo Producao - Sem Janela)...
-"%PYINSTALLER_CMD%" --noconfirm --clean --onedir --windowed --add-data "app;app" --add-data ".streamlit;.streamlit" --copy-metadata streamlit --copy-metadata reportlab --copy-metadata bcrypt --copy-metadata altair --copy-metadata pandas --copy-metadata pyarrow --collect-all streamlit --collect-all reportlab --collect-all bcrypt --hidden-import sqlite3 --hidden-import requests run_app.py
+%PYINSTALLER_CMD% --noconfirm --clean --onedir --windowed --add-data "app;app" --add-data ".streamlit;.streamlit" --copy-metadata streamlit --copy-metadata reportlab --copy-metadata bcrypt --copy-metadata altair --copy-metadata pandas --copy-metadata pyarrow --collect-all streamlit --collect-all reportlab --collect-all bcrypt --hidden-import sqlite3 --hidden-import requests run_app.py
 
 echo [3/3] Garantindo estrutura e sincronizando arquivos...
 if not exist "%RAIZ%\dist\run_app\segredos" mkdir "%RAIZ%\dist\run_app\segredos"
 if not exist "%RAIZ%\dist\run_app\armazenamento" mkdir "%RAIZ%\dist\run_app\armazenamento"
 if not exist "%RAIZ%\dist\run_app\logs" mkdir "%RAIZ%\dist\run_app\logs"
+if not exist "%RAIZ%\dist\run_app\.streamlit" mkdir "%RAIZ%\dist\run_app\.streamlit"
+if exist "%RAIZ%\.streamlit\config.toml" copy /Y "%RAIZ%\.streamlit\config.toml" "%RAIZ%\dist\run_app\.streamlit\config.toml" >nul
+if exist "%RAIZ%\ambiente.txt" copy /Y "%RAIZ%\ambiente.txt" "%RAIZ%\dist\run_app\ambiente.txt" >nul
 copy /Y "%RAIZ%\gerenciador_mestre.bat" "%RAIZ%\dist\run_app\gerenciador_mestre.bat" >nul
 if exist "%PORTA_FILE%" copy /Y "%PORTA_FILE%" "%RAIZ%\dist\run_app\porta.txt" >nul
 if exist "%DB_RAIZ%" copy /Y "%DB_RAIZ%" "%DB_DIST%" >nul
@@ -246,12 +249,15 @@ echo [1/3] Encerrando aplicacao em execucao...
 taskkill /F /IM run_app.exe /T >nul 2>&1
 
 echo [2/3] Compilando com PyInstaller (Modo Debug - Com Console)...
-"%PYINSTALLER_CMD%" --noconfirm --clean --onedir --console --add-data "app;app" --add-data ".streamlit;.streamlit" --copy-metadata streamlit --copy-metadata reportlab --copy-metadata bcrypt --copy-metadata altair --copy-metadata pandas --copy-metadata pyarrow --collect-all streamlit --collect-all reportlab --collect-all bcrypt --hidden-import sqlite3 --hidden-import requests run_app.py
+%PYINSTALLER_CMD% --noconfirm --clean --onedir --console --add-data "app;app" --add-data ".streamlit;.streamlit" --copy-metadata streamlit --copy-metadata reportlab --copy-metadata bcrypt --copy-metadata altair --copy-metadata pandas --copy-metadata pyarrow --collect-all streamlit --collect-all reportlab --collect-all bcrypt --hidden-import sqlite3 --hidden-import requests run_app.py
 
 echo [3/3] Garantindo estrutura e sincronizando arquivos...
 if not exist "%RAIZ%\dist\run_app\segredos" mkdir "%RAIZ%\dist\run_app\segredos"
 if not exist "%RAIZ%\dist\run_app\armazenamento" mkdir "%RAIZ%\dist\run_app\armazenamento"
 if not exist "%RAIZ%\dist\run_app\logs" mkdir "%RAIZ%\dist\run_app\logs"
+if not exist "%RAIZ%\dist\run_app\.streamlit" mkdir "%RAIZ%\dist\run_app\.streamlit"
+if exist "%RAIZ%\.streamlit\config.toml" copy /Y "%RAIZ%\.streamlit\config.toml" "%RAIZ%\dist\run_app\.streamlit\config.toml" >nul
+if exist "%RAIZ%\ambiente.txt" copy /Y "%RAIZ%\ambiente.txt" "%RAIZ%\dist\run_app\ambiente.txt" >nul
 copy /Y "%RAIZ%\gerenciador_mestre.bat" "%RAIZ%\dist\run_app\gerenciador_mestre.bat" >nul
 if exist "%PORTA_FILE%" copy /Y "%PORTA_FILE%" "%RAIZ%\dist\run_app\porta.txt" >nul
 if exist "%DB_RAIZ%" copy /Y "%DB_RAIZ%" "%DB_DIST%" >nul
@@ -272,9 +278,11 @@ if not exist "%RAIZ%\dist\run_app\run_app.exe" (
 )
 
 set "ISCC_CMD="
-if exist "%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe" set "ISCC_CMD=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
-if exist "%ProgramFiles%\Inno Setup 6\ISCC.exe" set "ISCC_CMD=%ProgramFiles%\Inno Setup 6\ISCC.exe"
-if exist "%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" set "ISCC_CMD=%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe"
+where iscc.exe >nul 2>&1 && set "ISCC_CMD=iscc.exe"
+if "%ISCC_CMD%"=="" if exist "%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe" set "ISCC_CMD=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
+if "%ISCC_CMD%"=="" if exist "%ProgramFiles%\Inno Setup 6\ISCC.exe" set "ISCC_CMD=%ProgramFiles%\Inno Setup 6\ISCC.exe"
+if "%ISCC_CMD%"=="" if exist "%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" set "ISCC_CMD=%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe"
+if "%ISCC_CMD%"=="" if exist "C:\Inno Setup 6\ISCC.exe" set "ISCC_CMD=C:\Inno Setup 6\ISCC.exe"
 
 if "%ISCC_CMD%"=="" (
     echo [ERRO] Inno Setup 6 nao foi encontrado no computador.

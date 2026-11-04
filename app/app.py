@@ -226,6 +226,25 @@ def conectar_banco():
         );
     """)
     banco.commit()
+
+    # Garante conector padrao caso seja uma instalacao nova com banco limpo
+    total_con = banco.execute("SELECT COUNT(*) AS total FROM conectores_fiscais").fetchone()["total"]
+    if total_con == 0:
+        data_agora = agora_iso()
+        banco.execute("""
+            INSERT INTO conectores_fiscais (nome, tipo_documento, cobertura, ambiente, url_consulta, usa_nsu, ativo, criado_em, atualizado_em)
+            VALUES (?, ?, ?, ?, ?, 1, 1, ?, ?)
+        """, (
+            "NFS-e Nacional ADN (Contribuintes) - Homologação",
+            "NFS-e",
+            "Nacional",
+            "HOMOLOGACAO",
+            "http://localhost:5000/DFe",
+            data_agora,
+            data_agora
+        ))
+        banco.commit()
+
     return banco
 
 
